@@ -229,7 +229,7 @@ public class BufferPool {
      *
      * @param tid the ID of the transaction requesting the unlock
      */
-    public void transactionComplete(TransactionId tid) throws IOException {
+    public void transactionComplete(TransactionId tid) {
         // some code goes here -Done
         // not necessary for lab1|lab2
     	transactionComplete(tid, true);
@@ -256,7 +256,7 @@ public class BufferPool {
      * @param commit a flag indicating whether we should commit or abort
      */
     public void transactionComplete(TransactionId tid, boolean commit)
-        throws IOException {
+        {
         // some code goes here -Done
         // not necessary for lab1|lab2
     	
@@ -270,7 +270,11 @@ public class BufferPool {
     	 * by restoring the page to its on-disk state.
     	 */
     	if (commit) {
-    		flushPages(tid);
+    		try {
+				flushPages(tid);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
     	}
     	
 		for (int i = 0; i < this.bufferPool.length; i++) {
