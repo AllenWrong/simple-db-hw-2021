@@ -2,7 +2,11 @@ package simpledb.storage;
 
 /** Unique identifier for HeapPage objects. */
 public class HeapPageId implements PageId {
-
+	/** The table id that is being referenced. */
+	private int tableId;
+	/** The page serial number in that table. */
+	private int pageSerialNum;
+	
     /**
      * Constructor. Create a page id structure for a specific page of a
      * specific table.
@@ -11,13 +15,15 @@ public class HeapPageId implements PageId {
      * @param pgNo The page number in that table.
      */
     public HeapPageId(int tableId, int pgNo) {
-        // some code goes here
+        // some code goes here -Done
+    	this.tableId = tableId;
+    	this.pageSerialNum = pgNo;
     }
 
     /** @return the table associated with this PageId */
     public int getTableId() {
-        // some code goes here
-        return 0;
+        // some code goes here -Done
+        return this.tableId;
     }
 
     /**
@@ -25,8 +31,8 @@ public class HeapPageId implements PageId {
      *   this PageId
      */
     public int getPageNumber() {
-        // some code goes here
-        return 0;
+        // some code goes here -Done
+        return this.pageSerialNum;
     }
 
     /**
@@ -36,8 +42,13 @@ public class HeapPageId implements PageId {
      * @see BufferPool
      */
     public int hashCode() {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        // some code goes here -Done
+//    	String tableIDStr = this.tableId + "";
+//    	String pageSerialNumStr = this.pageSerialNum + "";
+//    	String concatenation = tableIDStr + pageSerialNumStr;
+//    	return Integer.valueOf(concatenation);
+    	// tableId left move 6 bit.
+    	return this.tableId * 64 + this.pageSerialNum;
     }
 
     /**
@@ -48,8 +59,20 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        // some code goes here
-        return false;
+        // some code goes here -Done
+    	if(o instanceof HeapPageId) {
+    		HeapPageId heapPageId = (HeapPageId)o;
+    		// Same tableId and same page serial number.
+    		if(this.tableId == heapPageId.getTableId() &&
+    		   this.pageSerialNum == heapPageId.getPageNumber()) {
+    			return true;
+    		} else {
+    			return false;
+    		}
+    		
+    	} else {
+    		return false;
+		}
     }
 
     /**
@@ -59,7 +82,7 @@ public class HeapPageId implements PageId {
      *  constructors.
      */
     public int[] serialize() {
-        int[] data = new int[2];
+        int data[] = new int[2];
 
         data[0] = getTableId();
         data[1] = getPageNumber();

@@ -22,26 +22,72 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
-
+	
+	/** 
+	 * Inner class. Abstraction of the tables in the catalog. A table have a 
+	 * name, a DbFile to store the data and primary key field. So the inner 
+	 * class have three field. I use the 'public' to operate conveniently.
+	 */
+	public class Table {
+		public DbFile file;
+		public String name;
+		public String pkeyField;
+		
+		/**
+		 * Construct a table.
+		 * @param file
+		 * 				The file to store Table data.
+		 * @param name 
+		 * 				Table name.
+		 * @param pKeyField
+		 * 				Table primary key field.
+		 */
+		public Table(DbFile file, String name, String pkeyField) {
+			this.file = file;
+			this.name = name;
+			this.pkeyField = pkeyField;
+		}
+	}
+	
+	/** 
+	 * Use the table's id as the key in the hashMap.
+	 */
+	private ConcurrentHashMap<Integer, Table> catalog;
+	
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        // some code goes here
+        // some code goes here -Done
+    	this.catalog = new ConcurrentHashMap<>();
     }
 
     /**
      * Add a new table to the catalog.
      * This table's contents are stored in the specified DbFile.
-     * @param file the contents of the table to add;  file.getId() is the identfier of
+     * @param file the contents of the table to add;  file.getId() is the identifier of
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      * @param name the name of the table -- may be an empty string.  May not be null.  If a name
      * conflict exists, use the last table to be added as the table for a given name.
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+        // some code goes here -Done
+    	Enumeration<Integer> keys = this.catalog.keys();
+    	
+    	// If the current catalog contains the same name, we judge if this entity
+    	// has the same ID. If false, we remove this entity. If true, we just put a
+    	// new entity into it because it will cover it automatically.
+    	while(keys.hasMoreElements()) {
+    		int key = keys.nextElement();
+    		if (this.catalog.get(key).name.equals(name)) {
+    			if(key != file.getId()) {
+    				this.catalog.remove(key);
+    			}
+    		}
+    	}
+    	this.catalog.put(file.getId(), new Table(file, name, pkeyField));
     }
 
     public void addTable(DbFile file, String name) {
@@ -52,7 +98,7 @@ public class Catalog {
      * Add a new table to the catalog.
      * This table has tuples formatted using the specified TupleDesc and its
      * contents are stored in the specified DbFile.
-     * @param file the contents of the table to add;  file.getId() is the identfier of
+     * @param file the contents of the table to add;  file.getId() is the identifier of
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      */
     public void addTable(DbFile file) {
@@ -64,8 +110,21 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+        // some code goes here -Done
+    	// Table id is specified by the DbFile.getId(). Referent the 'getTupleDesc'
+    	// function.
+    	if(name == null) {
+    		throw new NoSuchElementException();
+    	}else {
+    		Enumeration<Integer> keys = this.catalog.keys();
+    		while(keys.hasMoreElements()) {
+    			int key = keys.nextElement();
+    			if(this.catalog.get(key).name.equals(name)) {
+    				return key;
+    			}
+    		}
+    		throw new NoSuchElementException();
+		}
     }
 
     /**
@@ -75,8 +134,11 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	if(this.catalog.containsKey(tableid)) {
+    		return this.catalog.get(tableid).file.getTupleDesc();
+    	}
+        throw new NoSuchElementException();
     }
 
     /**
@@ -86,28 +148,38 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	if(this.catalog.containsKey(tableid)) {
+    		return this.catalog.get(tableid).file;
+    	}
+        throw new NoSuchElementException();
     }
 
     public String getPrimaryKey(int tableid) {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	if(this.catalog.containsKey(tableid)) {
+    		return this.catalog.get(tableid).pkeyField;
+    	}
+        throw new NoSuchElementException();
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	return this.catalog.keySet().iterator();
     }
 
     public String getTableName(int id) {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	if(this.catalog.containsKey(id)) {
+    		return this.catalog.get(id).name;
+    	}
+        throw new NoSuchElementException();
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        // some code goes here
+        // some code goes here -Done
+    	this.catalog.clear();
     }
     
     /**
@@ -118,7 +190,7 @@ public class Catalog {
         String line = "";
         String baseFolder=new File(new File(catalogFile).getAbsolutePath()).getParent();
         try {
-            BufferedReader br = new BufferedReader(new FileReader(catalogFile));
+            BufferedReader br = new BufferedReader(new FileReader(new File(catalogFile)));
             
             while ((line = br.readLine()) != null) {
                 //assume line is of the format name (field type, field type, ...)
@@ -126,15 +198,15 @@ public class Catalog {
                 //System.out.println("TABLE NAME: " + name);
                 String fields = line.substring(line.indexOf("(") + 1, line.indexOf(")")).trim();
                 String[] els = fields.split(",");
-                ArrayList<String> names = new ArrayList<>();
-                ArrayList<Type> types = new ArrayList<>();
+                ArrayList<String> names = new ArrayList<String>();
+                ArrayList<Type> types = new ArrayList<Type>();
                 String primaryKey = "";
                 for (String e : els) {
                     String[] els2 = e.trim().split(" ");
                     names.add(els2[0].trim());
-                    if (els2[1].trim().equalsIgnoreCase("int"))
+                    if (els2[1].trim().toLowerCase().equals("int"))
                         types.add(Type.INT_TYPE);
-                    else if (els2[1].trim().equalsIgnoreCase("string"))
+                    else if (els2[1].trim().toLowerCase().equals("string"))
                         types.add(Type.STRING_TYPE);
                     else {
                         System.out.println("Unknown type " + els2[1]);
@@ -165,4 +237,3 @@ public class Catalog {
         }
     }
 }
-

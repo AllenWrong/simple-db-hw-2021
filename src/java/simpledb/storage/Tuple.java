@@ -1,8 +1,15 @@
 package simpledb.storage;
 
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
+
+import simpledb.storage.Field;
+import simpledb.storage.IntField;
+import simpledb.storage.RecordId;
+import simpledb.storage.StringField;
+import simpledb.storage.TupleDesc;
+import simpledb.common.Type;
 
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
@@ -13,6 +20,14 @@ public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /** Tuple description of this tuple.*/
+    private TupleDesc tupleDesc;
+    
+    /** The RecordId representing the location of this tuple on disk. May be null.*/
+    private RecordId recordId;
+    
+    private ArrayList<Field> tuple;
+    
     /**
      * Create a new tuple with the specified schema (type).
      *
@@ -21,15 +36,40 @@ public class Tuple implements Serializable {
      *            instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-        // some code goes here
+        // some code goes here -Done
+    	try {
+			if(td.numFields() < 1) {
+				throw new Exception("Less than one field when construct tuple.");
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+    	
+    	this.tuple = new ArrayList<>();
+    	
+    	// Initialize the tuple with 0 or "".
+    	for(int i = 0; i < td.numFields(); i++) {
+    		if (td.getFieldType(i).equals(Type.INT_TYPE)) {
+    			this.tuple.add(new IntField(0));
+    		} else if(td.getFieldType(i).equals(Type.STRING_TYPE)) {
+    			this.tuple.add(new StringField("", Integer.MAX_VALUE));
+    		} else {
+    			try {
+					throw new Exception("Unkown Field Type when contruct tuple.");
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+    		}
+    	}
+    	this.tupleDesc = td;
     }
 
     /**
      * @return The TupleDesc representing the schema of this tuple.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+        return this.tupleDesc;
     }
 
     /**
@@ -37,8 +77,8 @@ public class Tuple implements Serializable {
      *         be null.
      */
     public RecordId getRecordId() {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+        return this.recordId;
     }
 
     /**
@@ -48,7 +88,8 @@ public class Tuple implements Serializable {
      *            the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-        // some code goes here
+        // some code goes here -Done
+    	this.recordId = rid;
     }
 
     /**
@@ -60,7 +101,12 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-        // some code goes here
+        // some code goes here -Done
+    	if (i < 0 || i >= this.tuple.size()) {
+    		System.err.println("The index in the setField is illegal.");
+    	} else {
+    		this.tuple.set(i, f);
+    	}
     }
 
     /**
@@ -70,7 +116,12 @@ public class Tuple implements Serializable {
      *            field index to return. Must be a valid index.
      */
     public Field getField(int i) {
-        // some code goes here
+        // some code goes here -Done
+    	if (i < 0 || i >= this.tuple.size()) {
+    		System.err.println("The index in the setField is illegal.");
+    	} else {
+    		return this.tuple.get(i);
+    	}
         return null;
     }
 
@@ -83,8 +134,19 @@ public class Tuple implements Serializable {
      * where \t is any whitespace (except a newline)
      */
     public String toString() {
-        // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        // some code goes here -Done
+    	int tupleLength = this.tuple.size();
+    	String tupleLine = "";
+    	for(int i = 0; i < tupleLength; i++) {
+    		// Format the output.
+    		if(i == tupleLength - 1) {
+    			// If here needs a '\n'?
+    			tupleLine += (getField(i) + "\n");
+    		} else {
+    			tupleLine += (getField(i) + "\t");
+    		}
+    	}
+    	return tupleLine;
     }
 
     /**
@@ -93,8 +155,8 @@ public class Tuple implements Serializable {
      * */
     public Iterator<Field> fields()
     {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	return this.tuple.iterator();
     }
 
     /**
@@ -102,6 +164,7 @@ public class Tuple implements Serializable {
      * */
     public void resetTupleDesc(TupleDesc td)
     {
-        // some code goes here
+        // some code goes here -Done
+    	this.tupleDesc = td;
     }
 }

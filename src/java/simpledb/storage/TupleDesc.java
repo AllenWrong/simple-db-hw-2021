@@ -9,7 +9,9 @@ import java.util.*;
  * TupleDesc describes the schema of a tuple.
  */
 public class TupleDesc implements Serializable {
-
+	
+	private ArrayList<TDItem> tupleSchema;
+	
     /**
      * A help class to facilitate organizing the information of each field
      * */
@@ -43,8 +45,8 @@ public class TupleDesc implements Serializable {
      *        that are included in this TupleDesc
      * */
     public Iterator<TDItem> iterator() {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+        return this.tupleSchema.iterator();
     }
 
     private static final long serialVersionUID = 1L;
@@ -61,7 +63,25 @@ public class TupleDesc implements Serializable {
      *            be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
-        // some code goes here
+        // some code goes here -Done
+    	this.tupleSchema = new ArrayList<>();
+    	
+    	try {
+    		// If the length of the type array is less than one, throw a exception
+    		// and deal with it immediately.
+			if (typeAr.length < 1) {
+				throw new Exception("The numbe of the types of fields is less than"
+						+ "one when construct tupleDesc");
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+    	
+    	// Construct this tupleSchema
+    	for(int i = 0; i < typeAr.length; i++) {
+    		this.tupleSchema.add(new TDItem(typeAr[i], fieldAr[i]));
+    	}
+    	
     }
 
     /**
@@ -74,14 +94,32 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         // some code goes here
+    	this.tupleSchema = new ArrayList<>();
+    	
+    	try {
+    		// If the length of the type array is less than one, throw a exception
+    		// and deal with it immediately.
+			if (typeAr.length < 1) {
+				throw new Exception("The numbe of the types of fields is less than"
+						+ "one when construct tupleDesc");
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+    	
+    	// Construct this tupleSchema
+    	for(int i = 0; i < typeAr.length; i++) {
+    		this.tupleSchema.add(new TDItem(typeAr[i], null));
+    	}
+    	
     }
 
     /**
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        // some code goes here
-        return 0;
+        // some code goes here -Done
+        return this.tupleSchema.size();
     }
 
     /**
@@ -94,8 +132,8 @@ public class TupleDesc implements Serializable {
      *             if i is not a valid field reference.
      */
     public String getFieldName(int i) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	return this.tupleSchema.get(i).fieldName;
     }
 
     /**
@@ -109,8 +147,8 @@ public class TupleDesc implements Serializable {
      *             if i is not a valid field reference.
      */
     public Type getFieldType(int i) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	return this.tupleSchema.get(i).fieldType;
     }
 
     /**
@@ -123,8 +161,19 @@ public class TupleDesc implements Serializable {
      *             if no field with a matching name is found.
      */
     public int fieldNameToIndex(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+        // some code goes here -Done
+    	// Here, using the 'this.tupleSchema.size()' instead of the 'numFields()'
+    	// can reduce the dependence and avoid the cascade mistakes.
+    	if (name == null) {
+    		throw new NoSuchElementException();
+    	}
+    	
+    	for(int i = 0; i < this.tupleSchema.size(); i++) {
+    		if(name.equals(this.tupleSchema.get(i).fieldName)) {
+    			return i;
+    		}
+    	}
+        throw new NoSuchElementException();
     }
 
     /**
@@ -132,8 +181,14 @@ public class TupleDesc implements Serializable {
      *         Note that tuples from a given TupleDesc are of a fixed size.
      */
     public int getSize() {
-        // some code goes here
-        return 0;
+        // some code goes here -Done
+    	int totalSize = 0;
+    	// Here, using the 'this.tupleSchema.size()' instead of the 'numFields()'
+    	// can reduce the dependence and avoid the cascade mistakes.
+    	for(int i = 0; i < this.tupleSchema.size(); i++) {
+    		totalSize += this.tupleSchema.get(i).fieldType.getLen();
+    	}
+        return totalSize;
     }
 
     /**
@@ -147,8 +202,30 @@ public class TupleDesc implements Serializable {
      * @return the new TupleDesc
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
-        // some code goes here
-        return null;
+        // some code goes here -Done
+    	ArrayList<Type> typesList = new ArrayList<>();
+    	ArrayList<String> stringsList = new ArrayList<>();
+    	
+    	for(int i = 0; i < td1.numFields(); i++) {
+    		typesList.add(td1.getFieldType(i));
+    		stringsList.add(td1.getFieldName(i));
+    	}
+    	
+    	for(int i = 0; i < td2.numFields(); i++) {
+    		typesList.add(td2.getFieldType(i));
+    		stringsList.add(td2.getFieldName(i));
+    	}
+    	
+    	// Directly using the 'toArray', such as '(String[])stringsList.toArray()',
+    	// will throw exception and i do not know the reason.
+    	Type[] typeArr = new Type[typesList.size()];
+    	typesList.toArray(typeArr);
+    	
+    	String[] fieldArr = new String[stringsList.size()]; 
+    	fieldArr = stringsList.toArray(fieldArr);
+    	
+    	TupleDesc tupleDesc = new TupleDesc(typeArr, fieldArr);
+        return tupleDesc;
     }
 
     /**
@@ -163,8 +240,30 @@ public class TupleDesc implements Serializable {
      */
 
     public boolean equals(Object o) {
-        // some code goes here
-        return false;
+        // some code goes here -Done
+    	if (o == null) {
+    		return false;
+    	}
+    	
+    	TupleDesc object = null;
+    	
+    	if(o instanceof TupleDesc) {
+    		object = (TupleDesc)o;
+    	} else {
+    		return false;
+    	}
+    	
+    	
+    	if (this.tupleSchema.size() == object.numFields()) {
+    		for (int i = 0; i <this.tupleSchema.size(); i++) {
+    			if(!this.tupleSchema.get(i).fieldType.equals(object.getFieldType(i))) {
+    				return false;
+    			}
+    		}
+    		return true;
+    	} else {
+    		return false;
+    	}
     }
 
     public int hashCode() {
@@ -181,7 +280,20 @@ public class TupleDesc implements Serializable {
      * @return String describing this descriptor.
      */
     public String toString() {
-        // some code goes here
-        return "";
+        // some code goes here -Done
+    	String tupleSchemaLine = "";
+    	for (int i = 0; i < this.tupleSchema.size(); i++) {
+    		String subline = "";
+    		if (i == this.tupleSchema.size()-1) {
+    			subline += this.tupleSchema.get(i).fieldType.toString()+"[" + i +
+    					   "]("+ this.tupleSchema.get(i).fieldName +"[" + i + "])";
+    		} else {
+    			subline += this.tupleSchema.get(i).fieldType.toString()+"[" + i +
+ 					       "]("+ this.tupleSchema.get(i).fieldName +"[" + i + "]),";
+    		}
+    		tupleSchemaLine += subline;
+    	}
+        return tupleSchemaLine;
     }
 }
+
